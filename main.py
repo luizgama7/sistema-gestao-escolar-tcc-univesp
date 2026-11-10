@@ -1,4 +1,5 @@
 import os
+import uvicorn
 from urllib.parse import quote_plus
 import pymongo
 from fastapi import FastAPI, HTTPException, status
@@ -16,7 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# String de Conexão MongoDB Atlas
+# String de Conexão MongoDB Atlas (Pega da variável de ambiente do Render ou usa a padrão)
 MONGO_URI = os.getenv("MONGO_URI", "")
 
 if not MONGO_URI:
@@ -109,3 +110,8 @@ def atualizar_intervencao(aluno_id: str, dados: dict):
         {"$set": {"note": dados.get("note", ""), "status": "Em Acompanhamento"}}
     )
     return {"status": "atualizado"}
+
+# Bloco de execução local (Fica sempre no final do arquivo)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
