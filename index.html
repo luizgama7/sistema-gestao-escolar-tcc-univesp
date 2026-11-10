@@ -212,7 +212,7 @@
         </div>
       </section>
 
-      <!-- ABA 2: CONSULTA DE ALUNOS -->
+      <!-- ABA 2: CONSULTA DE ALUNOS (COM COLUNA DE STATUS) -->
       <section id="tab-students" class="space-y-6 hidden">
         <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-xl space-y-4">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -239,6 +239,7 @@
                   <th class="py-3 px-4">Média</th>
                   <th class="py-3 px-4">Frequência</th>
                   <th class="py-3 px-4">Predição IA</th>
+                  <th class="py-3 px-4">Status</th>
                   <th class="py-3 px-4 text-right">Ação / XAI</th>
                 </tr>
               </thead>
@@ -248,7 +249,7 @@
         </div>
       </section>
 
-      <!-- ABA 3: NOVO ALUNO (FIGURA 3 APRIMORADA) -->
+      <!-- ABA 3: NOVO ALUNO -->
       <section id="tab-new-student" class="max-w-2xl mx-auto space-y-6 hidden">
         <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5">
           <div class="border-b border-slate-800 pb-3">
@@ -327,7 +328,7 @@
         </div>
       </section>
 
-      <!-- ABA 4: MÓDULO IA (FIGURA 4 ELEGANTE E ROBUSTA) -->
+      <!-- ABA 4: MÓDULO IA -->
       <section id="tab-ai-model" class="space-y-6 hidden">
         <div class="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
@@ -374,7 +375,6 @@
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-            <!-- Descrição Técnica da IA -->
             <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-5 space-y-3">
               <h3 class="text-sm font-bold text-white flex items-center space-x-2">
                 <i class="fa-solid fa-microchip text-brand-500"></i>
@@ -390,7 +390,6 @@
               </ul>
             </div>
 
-            <!-- Importância das Variáveis -->
             <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-5 space-y-3">
               <h3 class="text-sm font-bold text-white flex items-center space-x-2">
                 <i class="fa-solid fa-sliders text-brand-500"></i>
@@ -419,7 +418,7 @@
         </div>
       </section>
 
-      <!-- ABA 5: ARQUITETURA (FIGURA 5 ELEGANTE E ROBUSTA) -->
+      <!-- ABA 5: ARQUITETURA -->
       <section id="tab-architecture" class="space-y-6 hidden">
         <div class="bg-gradient-to-r from-slate-900 via-slate-800/80 to-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
           <div class="border-b border-slate-800 pb-4">
@@ -430,7 +429,6 @@
             <p class="text-xs text-slate-400 mt-1">Infraestrutura distribuída para processamento de dados acadêmicos e disponibilização segura via web e dispositivos móveis.</p>
           </div>
 
-          <!-- Cards de Camadas Detalhadas -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-3 shadow-lg hover:border-brand-500/50 transition">
               <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-lg">
@@ -500,7 +498,7 @@
 
   <!-- SCRIPT INTEGRADO COM BACKEND -->
   <script>
-   const API_URL = "https://sistema-gestao-escolar-tcc-univesp.onrender.com";
+    const API_URL = "https://sistema-gestao-escolar-tcc-univesp.onrender.com";
     let students = [];
     let currentActiveStudentId = null;
     let riskChart = null;
@@ -620,6 +618,7 @@
             <td class="py-3 px-4 font-mono ${s.grade < 6 ? 'text-rose-400 font-bold' : 'text-slate-200'}">${s.grade}</td>
             <td class="py-3 px-4 font-mono ${s.attendance < 75 ? 'text-rose-400 font-bold' : 'text-slate-200'}">${s.attendance}%</td>
             <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-full text-[10px] font-semibold border ${s.predictedRisk === 'Alto' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : s.predictedRisk === 'Médio' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'}">Risco ${s.predictedRisk}</span></td>
+            <td class="py-3 px-4"><span class="px-2.5 py-1 rounded text-[10px] font-medium bg-slate-800 text-slate-300 border border-slate-700">${s.status}</span></td>
             <td class="py-3 px-4 text-right"><button onclick="openXAIModal('${s.id}')" class="text-xs bg-brand-600/20 text-brand-400 hover:bg-brand-600/40 px-2.5 py-1 rounded-lg border border-brand-500/30 transition">Detalhes / XAI</button></td>
           </tr>
         `;
@@ -640,7 +639,8 @@
         media: parseFloat(document.getElementById('input-grade').value),
         freq: parseFloat(document.getElementById('input-attendance').value),
         atrasos: parseInt(document.getElementById('input-delays').value),
-        ocorrencias: parseInt(document.getElementById('input-occurrences').value)
+        ocorrencias: parseInt(document.getElementById('input-occurrences').value),
+        status: "Pendente"
       };
       const res = await fetch(`${API_URL}/alunos`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
       if (res.ok) { alert('Aluno e dados acadêmicos salvos com sucesso!'); document.getElementById('form-add-student').reset(); await fetchStudentsFromBackend(); switchTab('dashboard'); }
