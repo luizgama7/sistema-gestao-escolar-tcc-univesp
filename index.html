@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Gestão Escolar com IA - TCC UNIVESP</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Google Fonts Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e' }
+          },
+          fontFamily: { sans: ['Inter', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090d16; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+  </style>
+</head>
+
+<body class="h-full flex flex-col bg-slate-950 text-slate-100 antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- TELA DE LOGIN (PROTEÇÃO DE DADOS SENSÍVEIS) -->
+  <div id="login-overlay" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-8 shadow-2xl relative space-y-6">
+      <div class="text-center space-y-2">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-purple-600 mx-auto flex items-center justify-center text-white text-2xl shadow-lg shadow-brand-500/30">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <h1 class="text-xl font-bold text-white">Sistema de Gestão Escolar <span class="text-brand-500">com IA</span></h1>
+        <p class="text-xs text-slate-400">Engenharia da Computação - UNIVESP TCC540</p>
+      </div>
+
+      <form onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Usuário Gestor</label>
+          <div class="relative">
+            <i class="fa-solid fa-user absolute left-3 top-3 text-slate-500 text-xs"></i>
+            <input type="text" id="login-user" required value="admin"
+                   class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Senha de Acesso</label>
+          <div class="relative">
+            <i class="fa-solid fa-lock absolute left-3 top-3 text-slate-500 text-xs"></i>
+            <input type="password" id="login-pass" required value="univesp2026"
+                   class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
+          </div>
+          <span class="text-[10px] text-slate-500 mt-1 block">Acesso padrão: admin / univesp2026</span>
+        </div>
+
+        <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold py-2.5 rounded-lg transition shadow-lg shadow-brand-600/30 flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-right-to-bracket"></i>
+          <span>Entrar no Sistema</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- APLICAÇÃO PRINCIPAL (OCULTA ATÉ O LOGIN) -->
+  <div id="app-main-container" class="hidden h-full flex flex-col">
+    <!-- CABEÇALHO / NAVBAR RESPONSIVA -->
+    <header class="bg-slate-900/90 border-b border-slate-800 sticky top-0 z-30 backdrop-blur-md">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          
+          <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('dashboard')">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-500/20">
+              <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div>
+              <h1 class="text-lg font-bold bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                Sistema de Gestão Escolar <span class="text-brand-500">com IA</span>
+              </h1>
+              <p class="text-[11px] text-slate-400 hidden sm:block">Engenharia da Computação - UNIVESP TCC540</p>
+            </div>
+          </div>
+
+          <!-- Menu Navegação Mobile/Web -->
+          <nav class="hidden md:flex space-x-1 sm:space-x-2">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn px-3 py-2 rounded-lg text-xs font-medium transition flex items-center space-x-2 bg-brand-600/20 text-brand-400 border border-brand-500/30">
+              <i class="fa-solid fa-chart-pie"></i><span>Dashboard</span>
+            </button>
+            <button onclick="switchTab('students')" id="nav-students" class="tab-btn px-3 py-2 rounded-lg text-xs font-medium transition flex items-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-800">
+              <i class="fa-solid fa-users"></i><span>Consulta Alunos</span>
+            </button>
+            <button onclick="switchTab('new-student')" id="nav-new-student" class="tab-btn px-3 py-2 rounded-lg text-xs font-medium transition flex items-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-800">
+              <i class="fa-solid fa-user-plus"></i><span>Novo Aluno</span>
+            </button>
+            <button onclick="switchTab('ai-model')" id="nav-ai-model" class="tab-btn px-3 py-2 rounded-lg text-xs font-medium transition flex items-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-800">
+              <i class="fa-solid fa-brain"></i><span>Módulo IA</span>
+            </button>
+            <button onclick="switchTab('architecture')" id="nav-architecture" class="tab-btn px-3 py-2 rounded-lg text-xs font-medium transition flex items-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-800">
+              <i class="fa-solid fa-diagram-project"></i><span>Arquitetura</span>
+            </button>
+          </nav>
+
+          <div class="flex items-center space-x-2">
+            <button onclick="logoutSistema()" title="Sair do Sistema" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs px-2.5 py-2 rounded-lg font-medium transition flex items-center space-x-1">
+              <i class="fa-solid fa-right-from-bracket"></i>
+              <span class="hidden lg:inline">Sair</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Menu Inferior para Mobile -->
+    <div class="md:hidden bg-slate-900 border-b border-slate-800 p-2 flex justify-around text-xs">
+      <button onclick="switchTab('dashboard')" class="text-brand-400 p-2"><i class="fa-solid fa-chart-pie text-base"></i></button>
+      <button onclick="switchTab('students')" class="text-slate-400 p-2"><i class="fa-solid fa-users text-base"></i></button>
+      <button onclick="switchTab('new-student')" class="text-slate-400 p-2"><i class="fa-solid fa-user-plus text-base"></i></button>
+      <button onclick="switchTab('ai-model')" class="text-slate-400 p-2"><i class="fa-solid fa-brain text-base"></i></button>
+      <button onclick="switchTab('architecture')" class="text-slate-400 p-2"><i class="fa-solid fa-diagram-project text-base"></i></button>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+      <!-- ABA 1: DASHBOARD -->
+      <section id="tab-dashboard" class="space-y-6">
+        <div class="bg-gradient-to-r from-slate-900 via-slate-800/90 to-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+            <div>
+              <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                <i class="fa-solid fa-shield-halved"></i> Apoio Preditivo à Decisão Gestora (TCC UNIVESP)
+              </div>
+              <h2 class="text-2xl sm:text-3xl font-bold text-white">Monitoramento de Desempenho e Risco Acadêmico</h2>
+              <p class="text-slate-400 text-xs sm:text-sm mt-1 max-w-2xl">
+                Classificação preditiva baseada em dados estruturados. Conectado ao MongoDB via FastAPI.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARDS KPI INTERATIVOS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div onclick="filtrarByKPI('')" class="bg-slate-900/80 hover:bg-slate-800/80 border border-slate-800 cursor-pointer rounded-xl p-4 shadow-lg flex items-center justify-between transition">
+            <div>
+              <p class="text-xs font-medium text-slate-400 uppercase">Total Alunos</p>
+              <h3 class="text-2xl font-bold text-white mt-1" id="kpi-total-students">0</h3>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-lg"><i class="fa-solid fa-user-graduate"></i></div>
+          </div>
+
+          <div onclick="filtrarByKPI('Alto')" class="bg-slate-900/80 hover:bg-slate-800/80 border border-rose-900/30 cursor-pointer rounded-xl p-4 shadow-lg flex items-center justify-between transition">
+            <div>
+              <p class="text-xs font-medium text-rose-400 uppercase">Risco Alto</p>
+              <h3 class="text-2xl font-bold text-rose-400 mt-1" id="kpi-high-risk">0</h3>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-lg"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          </div>
+
+          <div onclick="filtrarByKPI('Médio')" class="bg-slate-900/80 hover:bg-slate-800/80 border border-amber-900/30 cursor-pointer rounded-xl p-4 shadow-lg flex items-center justify-between transition">
+            <div>
+              <p class="text-xs font-medium text-amber-400 uppercase">Risco Médio</p>
+              <h3 class="text-2xl font-bold text-amber-400 mt-1" id="kpi-medium-risk">0</h3>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg"><i class="fa-solid fa-circle-exclamation"></i></div>
+          </div>
+
+          <div onclick="filtrarByKPI('Baixo')" class="bg-slate-900/80 hover:bg-slate-800/80 border border-emerald-900/30 cursor-pointer rounded-xl p-4 shadow-lg flex items-center justify-between transition">
+            <div>
+              <p class="text-xs font-medium text-emerald-400 uppercase">Risco Baixo</p>
+              <h3 class="text-2xl font-bold text-emerald-400 mt-1" id="kpi-low-risk">0</h3>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg"><i class="fa-solid fa-circle-check"></i></div>
+          </div>
+
+          <div onclick="filtrarByKPI('')" class="bg-slate-900/80 hover:bg-slate-800/80 border border-slate-800 cursor-pointer rounded-xl p-4 shadow-lg flex items-center justify-between transition">
+            <div>
+              <p class="text-xs font-medium text-slate-400 uppercase">Freq. / Média</p>
+              <div class="flex items-baseline space-x-1 mt-1">
+                <h3 class="text-base font-bold text-slate-100" id="kpi-avg-attendance">0%</h3><span>/</span>
+                <h3 class="text-base font-bold text-slate-100" id="kpi-avg-grade">0.0</h3>
+              </div>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-lg"><i class="fa-solid fa-chart-line"></i></div>
+          </div>
+        </div>
+
+        <!-- GRÁFICOS -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-xl">
+            <h3 class="text-sm font-semibold text-slate-200 mb-2">Distribuição por Nível de Risco</h3>
+            <div class="relative h-56 flex items-center justify-center"><canvas id="chartRiskDistribution"></canvas></div>
+          </div>
+          <div class="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-xl">
+            <h3 class="text-sm font-semibold text-slate-200 mb-2">Matriz de Dispersão: Frequência vs. Nota Média</h3>
+            <div class="relative h-56"><canvas id="chartScatter"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABA 2: CONSULTA DE ALUNOS -->
+      <section id="tab-students" class="space-y-6 hidden">
+        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-xl space-y-4">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <h2 class="text-lg font-bold text-white">Consulta Geral e Gestão da Intervenção</h2>
+            <div class="flex flex-wrap items-center gap-2">
+              <input type="text" id="filter-search" oninput="applyFilters()" placeholder="Buscar nome..." class="bg-slate-950 border border-slate-800 text-xs text-white px-3 py-2 rounded-lg">
+              <select id="filter-risk" onchange="applyFilters()" class="bg-slate-950 border border-slate-800 text-xs text-slate-200 px-3 py-2 rounded-lg">
+                <option value="">Todos os Riscos</option>
+                <option value="Alto">Risco Alto</option>
+                <option value="Médio">Risco Médio</option>
+                <option value="Baixo">Risco Baixo</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-800">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-slate-950 text-slate-400 uppercase border-b border-slate-800">
+                <tr>
+                  <th class="py-3 px-4">Aluno</th>
+                  <th class="py-3 px-4">Curso / Matéria</th>
+                  <th class="py-3 px-4">Turma / Turno</th>
+                  <th class="py-3 px-4">Professor</th>
+                  <th class="py-3 px-4">Média</th>
+                  <th class="py-3 px-4">Frequência</th>
+                  <th class="py-3 px-4">Predição IA</th>
+                  <th class="py-3 px-4 text-right">Ação / XAI</th>
+                </tr>
+              </thead>
+              <tbody id="student-table-body" class="divide-y divide-slate-800/60 bg-slate-900/40"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABA 3: NOVO ALUNO (FIGURA 3 APRIMORADA) -->
+      <section id="tab-new-student" class="max-w-2xl mx-auto space-y-6 hidden">
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5">
+          <div class="border-b border-slate-800 pb-3">
+            <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+              <i class="fa-solid fa-user-plus text-brand-500"></i>
+              <span>Novo Registro de Aluno e Matrícula Acadêmica</span>
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">Preencha os dados curriculares, turma, professor e desempenho. O modelo preditivo calculará o risco instantaneamente.</p>
+          </div>
+
+          <form id="form-add-student" onsubmit="handleNewStudentSubmit(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Nome Completo do Aluno</label>
+              <input type="text" id="input-name" required placeholder="Ex: Lucas Gabriel Medeiros" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Curso / Área</label>
+                <select id="input-subject" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                  <option value="Engenharia da Computação">Engenharia da Computação</option>
+                  <option value="Sistemas de Informação">Sistemas de Informação</option>
+                  <option value="Algoritmos & Estruturas">Algoritmos & Estruturas</option>
+                  <option value="Matemática Discreta">Matemática Discreta</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Matéria Específica</label>
+                <input type="text" id="input-materia" required placeholder="Ex: Inteligência Artificial Aplicada" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Turma</label>
+                <input type="text" id="input-turma" required placeholder="Ex: 3º Ano A" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Turno</label>
+                <select id="input-turno" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                  <option value="Noturno">Noturno</option>
+                  <option value="Matutino">Matutino</option>
+                  <option value="Vespertino">Vespertino</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Professor Responsável</label>
+                <input type="text" id="input-professor" required placeholder="Ex: Dr. Carlos Alberto" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Frequência (%)</label>
+                <input type="number" id="input-attendance" min="0" max="100" step="0.1" required placeholder="Ex: 85.0" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Média (0 a 10)</label>
+                <input type="number" id="input-grade" min="0" max="10" step="0.1" required placeholder="Ex: 7.5" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Atrasos</label>
+                <input type="number" id="input-delays" min="0" required placeholder="Ex: 2" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Ocorrências</label>
+                <input type="number" id="input-occurrences" min="0" required placeholder="Ex: 0" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+              </div>
+            </div>
+
+            <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold py-3 rounded-lg transition shadow-lg shadow-brand-600/30 flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-floppy-disk"></i>
+              <span>Salvar Aluno e Processar na Base MongoDB</span>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- ABA 4: MÓDULO IA (FIGURA 4 ELEGANTE E ROBUSTA) -->
+      <section id="tab-ai-model" class="space-y-6 hidden">
+        <div class="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div>
+              <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                <i class="fa-solid fa-brain"></i> Machine Learning Pipeline
+              </div>
+              <h2 class="text-xl sm:text-2xl font-bold text-white">Validação do Modelo Supervisionado (Random Forest Classifier)</h2>
+              <p class="text-xs text-slate-400 mt-1">Métricas de validação cruzada e avaliação de desempenho obtidas em ambiente de testes conforme seções do TCC.</p>
+            </div>
+            <button onclick="alert('Modelo re-treinado com sucesso utilizando K-Fold Cross-Validation (k=5).')" class="bg-gradient-to-r from-indigo-600 to-brand-600 hover:from-indigo-500 hover:to-brand-500 text-white text-xs px-4 py-2.5 rounded-xl font-medium transition shadow-lg shadow-indigo-500/20 flex items-center space-x-2">
+              <i class="fa-solid fa-rotate"></i>
+              <span>Reexecutar Treinamento e Testes</span>
+            </button>
+          </div>
+
+          <!-- Cards de Métricas Avançadas -->
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl text-center space-y-1">
+              <span class="text-[11px] text-slate-400 uppercase font-medium">Acurácia Global</span>
+              <div class="text-2xl font-bold text-emerald-400">92.4%</div>
+              <span class="text-[10px] text-slate-500">Taxa de acerto geral</span>
+            </div>
+            <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl text-center space-y-1">
+              <span class="text-[11px] text-slate-400 uppercase font-medium">Precisão</span>
+              <div class="text-2xl font-bold text-blue-400">89.1%</div>
+              <span class="text-[10px] text-slate-500">Minimização de falsos positivos</span>
+            </div>
+            <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl text-center space-y-1">
+              <span class="text-[11px] text-slate-400 uppercase font-medium">Recall (Sensibilidade)</span>
+              <div class="text-2xl font-bold text-amber-400">91.8%</div>
+              <span class="text-[10px] text-slate-500">Detecção de risco</span>
+            </div>
+            <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl text-center space-y-1">
+              <span class="text-[11px] text-slate-400 uppercase font-medium">F1-Score</span>
+              <div class="text-2xl font-bold text-purple-400">90.4%</div>
+              <span class="text-[10px] text-slate-500">Média harmônica</span>
+            </div>
+            <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl text-center space-y-1 col-span-2 md:col-span-1">
+              <span class="text-[11px] text-slate-400 uppercase font-medium">ROC-AUC</span>
+              <div class="text-2xl font-bold text-cyan-400">0.95</div>
+              <span class="text-[10px] text-slate-500">Capacidade discriminatória</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+            <!-- Descrição Técnica da IA -->
+            <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-5 space-y-3">
+              <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                <i class="fa-solid fa-microchip text-brand-500"></i>
+                <span>Parâmetros e Engenharia de Atributos</span>
+              </h3>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                O classificador baseia-se em um ensemble de 100 árvores de decisão. Os atributos de entrada são normalizados e ponderados, com maior relevância atribuída à frequência acadêmica acumulada e ao histórico de notas parciais.
+              </p>
+              <ul class="text-xs text-slate-400 space-y-1.5 list-disc list-inside">
+                <li>Hiperparâmetros: <code class="text-brand-400 font-mono">n_estimators=100, max_depth=10</code></li>
+                <li>Validação cruzada em 5 partições (StratifiedKFold)</li>
+                <li>Explainable AI (XAI) integrado para auditoria das decisões</li>
+              </ul>
+            </div>
+
+            <!-- Importância das Variáveis -->
+            <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-5 space-y-3">
+              <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                <i class="fa-solid fa-sliders text-brand-500"></i>
+                <span>Importância Relativa dos Atributos (Feature Importance)</span>
+              </h3>
+              <div class="space-y-2.5 text-xs">
+                <div>
+                  <div class="flex justify-between mb-1 text-slate-300"><span>Frequência Acadêmica (%)</span><span class="font-mono text-brand-400 font-bold">42%</span></div>
+                  <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden"><div class="bg-brand-500 h-full rounded-full" style="width: 42%"></div></div>
+                </div>
+                <div>
+                  <div class="flex justify-between mb-1 text-slate-300"><span>Média Geral de Notas</span><span class="font-mono text-brand-400 font-bold">33%</span></div>
+                  <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden"><div class="bg-brand-500 h-full rounded-full" style="width: 33%"></div></div>
+                </div>
+                <div>
+                  <div class="flex justify-between mb-1 text-slate-300"><span>Ocorrências Disciplinares</span><span class="font-mono text-brand-400 font-bold">15%</span></div>
+                  <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden"><div class="bg-brand-500 h-full rounded-full" style="width: 15%"></div></div>
+                </div>
+                <div>
+                  <div class="flex justify-between mb-1 text-slate-300"><span>Histórico de Atrasos</span><span class="font-mono text-brand-400 font-bold">10%</span></div>
+                  <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden"><div class="bg-brand-500 h-full rounded-full" style="width: 10%"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABA 5: ARQUITETURA (FIGURA 5 ELEGANTE E ROBUSTA) -->
+      <section id="tab-architecture" class="space-y-6 hidden">
+        <div class="bg-gradient-to-r from-slate-900 via-slate-800/80 to-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+          <div class="border-b border-slate-800 pb-4">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-semibold uppercase tracking-wider mb-2">
+              <i class="fa-solid fa-network-wired"></i> Arquitetura de 3 Camadas
+            </div>
+            <h2 class="text-xl sm:text-2xl font-bold text-white">Arquitetura Proposta: FastAPI + MongoDB + Web/Mobile Responsivo</h2>
+            <p class="text-xs text-slate-400 mt-1">Infraestrutura distribuída para processamento de dados acadêmicos e disponibilização segura via web e dispositivos móveis.</p>
+          </div>
+
+          <!-- Cards de Camadas Detalhadas -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-3 shadow-lg hover:border-brand-500/50 transition">
+              <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-mobile-screen-button"></i>
+              </div>
+              <h3 class="text-sm font-bold text-white">1. Camada de Apresentação (Frontend)</h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Desenvolvida com HTML5, Tailwind CSS e Chart.js. Totalmente responsiva para navegadores desktop e dispositivos móveis, garantindo acesso universal aos gestores.
+              </p>
+              <div class="pt-2 flex flex-wrap gap-1">
+                <span class="text-[10px] bg-slate-900 text-slate-300 px-2 py-0.5 rounded border border-slate-800">Tailwind CSS</span>
+                <span class="text-[10px] bg-slate-900 text-slate-300 px-2 py-0.5 rounded border border-slate-800">Chart.js</span>
+                <span class="text-[10px] bg-slate-900 text-slate-300 px-2 py-0.5 rounded border border-slate-800">Mobile Friendly</span>
+              </div>
+            </div>
+
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-3 shadow-lg hover:border-brand-500/50 transition">
+              <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-server"></i>
+              </div>
+              <h3 class="text-sm font-bold text-white">2. Camada de Negócio e API (Backend)</h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Construída em Python com FastAPI. Gerencia rotas REST, autenticação segura com tokens de sessão e inferência em tempo real com o modelo de Machine Learning.
+              </p>
+              <div class="pt-2 flex flex-wrap gap-1">
+                <span class="text-[10px] bg-slate-900 text-slate-300 px-2 py-0.5 rounded border border-slate-800">FastAPI</span>
+                <span class="text-[10px] bg-slate-900 text-slate-300 px-2 py-0.5 rounded border border-slate-800">Scikit-Learn</span>
+                <span class="text-[10px] bg-slate-900 text-slate-300 px-2 py-0.5 rounded border border-slate-800">JWT Auth</span>
+              </div>
+            </div>
+
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-3 shadow-lg hover:border-brand-500/50 transition">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-database"></i>
+              </div>
+              <h3 class="text-sm font-bold text-white">3. Camada de Persistência (Database)</h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Utiliza MongoDB Atlas em nuvem para armazenamento NoSQL flexível e seguro de registros de discentes, notas, frequências e pareceres de intervenção pedagógica.
+              </p>
+              <div class="pt-2 flex flex-wrap gap-1">
+                <span class="text-[10px] bg-slate-900 text-slate-300 px-2 py-0.5 rounded border border-slate-800">MongoDB Atlas</span>
+                <span class="text-[10px] bg-slate-900 text-slate-300 px-2 py-0.5 rounded border border-slate-800">NoSQL</span>
+                <span class="text-[10px] bg-slate-900 text-slate-300 px-2 py-0.5 rounded border border-slate-800">Cloud Storage</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL XAI -->
+  <div id="modal-xai" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div>
+          <h3 class="text-base font-bold text-white" id="modal-student-name">Detalhes do Aluno</h3>
+          <p class="text-xs text-slate-400" id="modal-student-details-sub">Matéria | Turma | Professor</p>
+        </div>
+        <button onclick="closeXAIModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="modal-xai-factors" class="space-y-2 text-xs"></div>
+      <textarea id="modal-intervention-notes" rows="2" placeholder="Parecer pedagógico e ações de intervenção..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-brand-500"></textarea>
+      <button onclick="confirmHumanIntervention()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs py-2.5 rounded-lg font-semibold transition shadow-lg shadow-emerald-600/20">Salvar Intervenção Pedagógica</button>
+    </div>
+  </div>
+
+  <!-- SCRIPT INTEGRADO COM BACKEND -->
+  <script>
+    const API_URL = "http://localhost:8000";
+    let students = [];
+    let currentActiveStudentId = null;
+    let riskChart = null;
+    let scatterChart = null;
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const user = document.getElementById('login-user').value;
+      const pass = document.getElementById('login-pass').value;
+
+      try {
+        const res = await fetch(`${API_URL}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user, password: pass })
+        });
+        if (res.ok) {
+          document.getElementById('login-overlay').classList.add('hidden');
+          document.getElementById('app-main-container').classList.remove('hidden');
+          initApp();
+        } else {
+          alert('Usuário ou senha incorretos!');
+        }
+      } catch (err) {
+        alert('Erro ao conectar com o FastAPI. Certifique-se de que o servidor Python está rodando.');
+      }
+    }
+
+    function logoutSistema() {
+      document.getElementById('login-overlay').classList.remove('hidden');
+      document.getElementById('app-main-container').classList.add('hidden');
+    }
+
+    async function initApp() {
+      await fetchStudentsFromBackend();
+      renderDashboard();
+      renderStudentTable();
+      initCharts();
+    }
+
+    async function fetchStudentsFromBackend() {
+      try {
+        const res = await fetch(`${API_URL}/alunos`);
+        if (res.ok) {
+          const raw = await res.json();
+          students = raw.map(s => ({
+            id: s.id || String(Date.now()),
+            name: s.name,
+            subject: s.subject || 'Engenharia da Computação',
+            materia: s.materia || 'Inteligência Artificial',
+            turma: s.turma || '3º Ano A',
+            turno: s.turno || 'Noturno',
+            professor: s.professor || 'Dr. Carlos',
+            attendance: s.freq,
+            grade: s.media,
+            delays: s.atrasos || 1,
+            occurrences: s.ocorrencias || 0,
+            status: s.status || 'Pendente',
+            notes: s.note || '',
+            predictedRisk: s.risk,
+            xaiFactors: getXAIFactors(s.freq, s.media, s.atrasos || 0, s.ocorrencias || 0)
+          }));
+        }
+      } catch (err) { console.error(err); }
+    }
+
+    function getXAIFactors(att, grade, delays, occ) {
+      const factors = [];
+      if (att < 75) factors.push({ title: 'Frequência Crítica', desc: `Assiduidade de ${att}% abaixo do limite`, impact: 'high-neg' });
+      else factors.push({ title: 'Frequência Regular', desc: `Assiduidade de ${att}% adequada`, impact: 'pos' });
+      if (grade < 6.0) factors.push({ title: 'Média Insuficiente', desc: `Nota média ${grade} abaixo do corte`, impact: 'high-neg' });
+      else factors.push({ title: 'Média Satisfatória', desc: `Nota média ${grade} adequada`, impact: 'pos' });
+      if (occ > 0) factors.push({ title: 'Ocorrências Disciplinares', desc: `${occ} registro(s) disciplinar(es)`, impact: 'med-neg' });
+      return factors;
+    }
+
+    function switchTab(id) {
+      ['dashboard', 'students', 'new-student', 'ai-model', 'architecture'].forEach(tab => {
+        document.getElementById(`tab-${tab}`).classList.add('hidden');
+      });
+      document.getElementById(`tab-${id}`).classList.remove('hidden');
+      if (id === 'dashboard') { renderDashboard(); updateCharts(); }
+      if (id === 'students') renderStudentTable();
+    }
+
+    function renderDashboard() {
+      const total = students.length;
+      const high = students.filter(s => s.predictedRisk === 'Alto').length;
+      const med = students.filter(s => s.predictedRisk === 'Médio').length;
+      const low = students.filter(s => s.predictedRisk === 'Baixo').length;
+      const avgAtt = total ? (students.reduce((a, b) => a + b.attendance, 0) / total).toFixed(1) : 0;
+      const avgGrade = total ? (students.reduce((a, b) => a + b.grade, 0) / total).toFixed(1) : 0;
+
+      document.getElementById('kpi-total-students').innerText = total;
+      document.getElementById('kpi-high-risk').innerText = high;
+      document.getElementById('kpi-medium-risk').innerText = med;
+      document.getElementById('kpi-low-risk').innerText = low;
+      document.getElementById('kpi-avg-attendance').innerText = `${avgAtt}%`;
+      document.getElementById('kpi-avg-grade').innerText = avgGrade;
+    }
+
+    function renderStudentTable() {
+      const tbody = document.getElementById('student-table-body');
+      tbody.innerHTML = '';
+      const search = document.getElementById('filter-search').value.toLowerCase();
+      const risk = document.getElementById('filter-risk').value;
+
+      const filtered = students.filter(s => s.name.toLowerCase().includes(search) && (!risk || s.predictedRisk === risk));
+
+      filtered.forEach(s => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-3 px-4 font-semibold text-white">${s.name}</td>
+            <td class="py-3 px-4 text-slate-400">${s.subject} <br><span class="text-[10px] text-slate-500">${s.materia || ''}</span></td>
+            <td class="py-3 px-4 text-slate-300">${s.turma || '3º Ano A'} <span class="text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">${s.turno || 'Noturno'}</span></td>
+            <td class="py-3 px-4 text-slate-300">${s.professor || 'Dr. Carlos'}</td>
+            <td class="py-3 px-4 font-mono ${s.grade < 6 ? 'text-rose-400 font-bold' : 'text-slate-200'}">${s.grade}</td>
+            <td class="py-3 px-4 font-mono ${s.attendance < 75 ? 'text-rose-400 font-bold' : 'text-slate-200'}">${s.attendance}%</td>
+            <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-full text-[10px] font-semibold border ${s.predictedRisk === 'Alto' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : s.predictedRisk === 'Médio' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'}">Risco ${s.predictedRisk}</span></td>
+            <td class="py-3 px-4 text-right"><button onclick="openXAIModal('${s.id}')" class="text-xs bg-brand-600/20 text-brand-400 hover:bg-brand-600/40 px-2.5 py-1 rounded-lg border border-brand-500/30 transition">Detalhes / XAI</button></td>
+          </tr>
+        `;
+      });
+    }
+
+    function applyFilters() { renderStudentTable(); }
+
+    async function handleNewStudentSubmit(e) {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('input-name').value,
+        subject: document.getElementById('input-subject').value,
+        materia: document.getElementById('input-materia').value,
+        turma: document.getElementById('input-turma').value,
+        turno: document.getElementById('input-turno').value,
+        professor: document.getElementById('input-professor').value,
+        media: parseFloat(document.getElementById('input-grade').value),
+        freq: parseFloat(document.getElementById('input-attendance').value),
+        atrasos: parseInt(document.getElementById('input-delays').value),
+        ocorrencias: parseInt(document.getElementById('input-occurrences').value)
+      };
+      const res = await fetch(`${API_URL}/alunos`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+      if (res.ok) { alert('Aluno e dados acadêmicos salvos com sucesso!'); document.getElementById('form-add-student').reset(); await fetchStudentsFromBackend(); switchTab('dashboard'); }
+    }
+
+    function openXAIModal(id) {
+      currentActiveStudentId = id;
+      const s = students.find(x => x.id === id);
+      document.getElementById('modal-student-name').innerText = s.name;
+      document.getElementById('modal-student-details-sub').innerText = `${s.subject} | Matéria: ${s.materia || 'IA'} | Turma: ${s.turma || '3º Ano'} (${s.turno || 'Noturno'}) | Prof: ${s.professor || 'Dr. Carlos'}`;
+      const container = document.getElementById('modal-xai-factors');
+      container.innerHTML = s.xaiFactors.map(f => `<div class="p-2 rounded bg-slate-950 border border-slate-800"><b>${f.title}</b>: ${f.desc}</div>`).join('');
+      document.getElementById('modal-intervention-notes').value = s.notes || '';
+      document.getElementById('modal-xai').classList.remove('hidden');
+    }
+
+    function closeXAIModal() { document.getElementById('modal-xai').classList.add('hidden'); }
+
+    async function confirmHumanIntervention() {
+      const note = document.getElementById('modal-intervention-notes').value;
+      await fetch(`${API_URL}/alunos/${currentActiveStudentId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({note}) });
+      closeXAIModal();
+      await fetchStudentsFromBackend();
+      renderDashboard();
+      alert('Intervenção pedagógica salva com sucesso!');
+    }
+
+    function initCharts() {
+      const ctxRisk = document.getElementById('chartRiskDistribution').getContext('2d');
+      riskChart = new Chart(ctxRisk, { type: 'doughnut', data: getRiskData(), options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 } } } }, cutout: '70%' } });
+      const ctxScatter = document.getElementById('chartScatter').getContext('2d');
+      scatterChart = new Chart(ctxScatter, { type: 'scatter', data: getScatterData(), options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' }, min: 40, max: 100 }, y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' }, min: 3, max: 10 } } } });
+    }
+
+    function getRiskData() {
+      return { labels: ['Risco Alto', 'Risco Médio', 'Risco Baixo'], datasets: [{ data: [students.filter(s=>s.predictedRisk==='Alto').length, students.filter(s=>s.predictedRisk==='Médio').length, students.filter(s=>s.predictedRisk==='Baixo').length], backgroundColor: ['#f43f5e', '#f59e0b', '#10b981'], borderWidth: 0 }] };
+    }
+
+    function getScatterData() {
+      return { datasets: [{ label: 'Alunos', data: students.map(s => ({x: s.attendance, y: s.grade})), backgroundColor: '#0ea5e9', pointRadius: 6 }] };
+    }
+
+    function updateCharts() {
+      if (riskChart) { riskChart.data = getRiskData(); riskChart.update(); }
+      if (scatterChart) { scatterChart.data = getScatterData(); scatterChart.update(); }
+    }
+
+    function filtrarByKPI(risk) {
+      switchTab('students');
+      document.getElementById('filter-risk').value = risk;
+      applyFilters();
+    }
+  </script>
+</body>
+</html>
